@@ -19,3 +19,17 @@ export interface Budget {
   predicted_total: number;
   percentage: string;
 }
+
+export interface Category {
+  id: number;
+  name: string;
+  color: string;
+  parent_id: number;
+  group_id: string;
+  fixed: boolean;
+  essential: boolean;
+  default: boolean;
+  uuid: string;
+  kind: "expenses" | "earnings" | "none";
+  archived: boolean;
+}

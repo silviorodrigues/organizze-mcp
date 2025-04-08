@@ -113,5 +113,57 @@ server.tool("get-budgets", "Get a list of target budgets", {
   }
 });
 
+server.tool("get-categories", "Get a list of categories or a single category by id", {
+  category_id: z.number().optional(),
+}, async ({category_id}) => {
+  try {
+    const response = await organizzeService.getCategories(category_id);
+
+    if (!response) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "No categories found",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Categories found",
+        },
+        {
+          type: "text",
+          text: JSON.stringify(response, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Failed to get categories: ${error.message}`,
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "An unknown error occurred",
+        },
+      ],
+    };
+  }
+});
+
 const transport = new StdioServerTransport();
 await server.connect(transport);

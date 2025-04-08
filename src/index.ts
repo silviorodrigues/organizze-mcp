@@ -9,161 +9,234 @@ const server = new McpServer({
   description: "MCP server for Organizze API",
 });
 
-server.tool("get-bank-accounts", "Get a list of bank accounts", async (_) => {
-  try {
-    const response = await organizzeService.getBankAccounts();
+server.tool(
+  "get-bank-accounts",
+  "Get a list of bank accounts or a single bank account by id",
+  {
+    account_id: z.number().optional(),
+  },
+  async ({ account_id }) => {
+    try {
+      const response = await organizzeService.getBankAccounts(account_id);
 
-    if (!response || response.length === 0) {
+      if (!response) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No bank accounts found",
+            },
+          ],
+        };
+      }
+
       return {
         content: [
           {
             type: "text",
-            text: "No bank accounts found",
+            text: "Bank accounts found",
+          },
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
           },
         ],
       };
-    }
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to get bank accounts: ${error.message}`,
+            },
+          ],
+        };
+      }
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: "Bank accounts found",
-        },
-        {
-          type: "text",
-          text: JSON.stringify(response, null, 2),
-        },
-      ],
-    };
-  } catch (error) {
-    if (error instanceof Error) {
       return {
         content: [
           {
             type: "text",
-            text: `Failed to get bank accounts: ${error.message}`,
+            text: "An unknown error occurred",
           },
         ],
       };
     }
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: "An unknown error occurred",
-        },
-      ],
-    };
   }
-});
+);
 
+server.tool(
+  "get-credit-cards",
+  "Get a list of credit cards or a single credit card by id",
+  {
+    credit_card_id: z.number().optional(),
+  },
+  async ({ credit_card_id }) => {
+    try {
+      const response = await organizzeService.getCreditCards(credit_card_id);
 
-server.tool("get-budgets", "Get a list of target budgets", {
-  year: z.string().optional(),
-  month: z.string().optional(),
-}, async ({year, month}) => {
-  try {
-    const response = await organizzeService.getBudgets(year, month);
+      if (!response) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No credit cards found",
+            },
+          ],
+        };
+      }
 
-    if (!response || response.length === 0) {
       return {
         content: [
           {
             type: "text",
-            text: "No budgets found",
+            text: "Credit cards found",
+          },
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
           },
         ],
       };
-    }
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to get credit cards: ${error.message}`,
+            },
+          ],
+        };
+      }
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: "Budgets found",
-        },
-        {
-          type: "text",
-          text: JSON.stringify(response, null, 2),
-        },
-      ],
-    };
-  } catch (error) {
-    if (error instanceof Error) {
       return {
         content: [
           {
             type: "text",
-            text: `Failed to get budgets: ${error.message}`,
+            text: "An unknown error occurred",
           },
         ],
       };
     }
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: "An unknown error occurred",
-        },
-      ],
-    };
   }
-});
+);
 
-server.tool("get-categories", "Get a list of categories or a single category by id", {
-  category_id: z.number().optional(),
-}, async ({category_id}) => {
-  try {
-    const response = await organizzeService.getCategories(category_id);
+server.tool(
+  "get-budgets",
+  "Get a list of target budgets",
+  {
+    year: z.string().optional(),
+    month: z.string().optional(),
+  },
+  async ({ year, month }) => {
+    try {
+      const response = await organizzeService.getBudgets(year, month);
 
-    if (!response) {
+      if (!response || response.length === 0) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No budgets found",
+            },
+          ],
+        };
+      }
+
       return {
         content: [
           {
             type: "text",
-            text: "No categories found",
+            text: "Budgets found",
+          },
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
           },
         ],
       };
-    }
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to get budgets: ${error.message}`,
+            },
+          ],
+        };
+      }
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: "Categories found",
-        },
-        {
-          type: "text",
-          text: JSON.stringify(response, null, 2),
-        },
-      ],
-    };
-  } catch (error) {
-    if (error instanceof Error) {
       return {
         content: [
           {
             type: "text",
-            text: `Failed to get categories: ${error.message}`,
+            text: "An unknown error occurred",
           },
         ],
       };
     }
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: "An unknown error occurred",
-        },
-      ],
-    };
   }
-});
+);
+
+server.tool(
+  "get-categories",
+  "Get a list of categories or a single category by id",
+  {
+    category_id: z.number().optional(),
+  },
+  async ({ category_id }) => {
+    try {
+      const response = await organizzeService.getCategories(category_id);
+
+      if (!response) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No categories found",
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Categories found",
+          },
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to get categories: ${error.message}`,
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "An unknown error occurred",
+          },
+        ],
+      };
+    }
+  }
+);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

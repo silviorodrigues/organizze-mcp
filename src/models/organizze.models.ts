@@ -33,3 +33,20 @@ export interface Category {
   kind: "expenses" | "earnings" | "none";
   archived: boolean;
 }
+
+export interface CreditCard {
+  id: number;
+  name: string;
+  description: string | null;
+  card_network: string;
+  closing_day: number;
+  due_day: number;
+  limit_cents: number;
+  archived: boolean;
+  default: boolean;
+  institution_id: string;
+  institution_name: string | null;
+  created_at: string;
+  updated_at: string;
+  type: "credit_card";
+}

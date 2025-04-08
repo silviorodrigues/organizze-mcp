@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const server = new McpServer({
   name: "organizze-mcp",
-  version: "0.0.1",
+  version: "0.0.2",
   description: "MCP server for Organizze API",
 });
 

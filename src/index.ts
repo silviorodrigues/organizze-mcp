@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { organizzeService } from "./services/organizze.service.js";
+import { z } from "zod";
 
 const server = new McpServer({
   name: "organizze-mcp",
@@ -41,7 +42,61 @@ server.tool("get-bank-accounts", "Get a list of bank accounts", async (_) => {
         content: [
           {
             type: "text",
-            text: `Failed to query events: ${error.message}`,
+            text: `Failed to get bank accounts: ${error.message}`,
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "An unknown error occurred",
+        },
+      ],
+    };
+  }
+});
+
+
+server.tool("get-budgets", "Get a list of target budgets", {
+  year: z.string().optional(),
+  month: z.string().optional(),
+}, async ({year, month}) => {
+  try {
+    const response = await organizzeService.getBudgets(year, month);
+
+    if (!response || response.length === 0) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "No budgets found",
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Budgets found",
+        },
+        {
+          type: "text",
+          text: JSON.stringify(response, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Failed to get budgets: ${error.message}`,
           },
         ],
       };

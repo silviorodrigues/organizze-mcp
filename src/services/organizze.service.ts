@@ -1,19 +1,46 @@
-import { BankAccount, Budget, Category, CreditCard } from "../models/organizze.models.js";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
+import {
+  BankAccount,
+  Budget,
+  Category,
+  CreditCard,
+} from "../models/organizze.models.js";
+
+interface OrganizzeArgv {
+  "organizze-username": string;
+  "organizze-api-key": string;
+  [key: string]: unknown;
+}
 
 export class OrganizzeService {
   private readonly baseUrl = "https://api.organizze.com.br/rest/v2";
 
-  // TODO: Replace by environment variables
+  private readonly argv = yargs(hideBin(process.argv))
+    .option("organizze-username", {
+      type: "string",
+      description: "Organizze username",
+      demandOption: true,
+    })
+    .option("organizze-api-key", {
+      type: "string",
+      description: "Organizze API key",
+      demandOption: true,
+    })
+    .help().argv as OrganizzeArgv;
+
   private readonly buildHeaders = () => {
-    const username = process.env.ORGANIZZE_USERNAME;
-    const apiKey = process.env.ORGANIZZE_API_KEY;
+    const username = this.argv["organizze-username"];
+    const apiKey = this.argv["organizze-api-key"];
 
     return {
       Authorization: `Basic ${btoa(username + ":" + apiKey)}`,
     };
   };
 
-  public async getBankAccounts(account_id?: number): Promise<BankAccount[] | BankAccount> {
+  public async getBankAccounts(
+    account_id?: number
+  ): Promise<BankAccount[] | BankAccount> {
     try {
       let url = `${this.baseUrl}/accounts`;
       if (account_id) {
@@ -38,7 +65,9 @@ export class OrganizzeService {
     }
   }
 
-  public async getCreditCards(credit_card_id?: number): Promise<CreditCard[] | CreditCard> {
+  public async getCreditCards(
+    credit_card_id?: number
+  ): Promise<CreditCard[] | CreditCard> {
     try {
       let url = `${this.baseUrl}/credit_cards`;
 
@@ -94,7 +123,9 @@ export class OrganizzeService {
     }
   }
 
-  public async getCategories(category_id?: number): Promise<Category[] | Category> {
+  public async getCategories(
+    category_id?: number
+  ): Promise<Category[] | Category> {
     try {
       let url = `${this.baseUrl}/categories`;
 

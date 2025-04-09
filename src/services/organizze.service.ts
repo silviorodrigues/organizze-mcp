@@ -5,7 +5,8 @@ import {
   Budget,
   Category,
   CreditCard,
-  Invoice,
+  CreditCardInvoice,
+  DetailedInvoice,
 } from "../models/organizze.models.js";
 
 interface OrganizzeArgv {
@@ -99,7 +100,7 @@ export class OrganizzeService {
     }
   }
 
-  public async getCreditCardInvoices(credit_card_id: number, dateRange?: OrganizzeDateRange): Promise<Invoice[]> {
+  public async getCreditCardInvoices(credit_card_id: number, dateRange?: OrganizzeDateRange): Promise<CreditCardInvoice[]> {
     try {
       let url = `${this.baseUrl}/credit_cards/${credit_card_id}/invoices`;
 
@@ -115,10 +116,32 @@ export class OrganizzeService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return (await response.json()) as Invoice[];
+      return (await response.json()) as CreditCardInvoice[];
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Failed to get credit cards invoices: ${error.message}`);
+      }
+
+      throw new Error("Unknown error occurred");
+    }
+  }
+
+  public async getInvoiceDetails(credit_card_id: number, invoice_id: number): Promise<DetailedInvoice> {
+    try {
+      let url = `${this.baseUrl}/credit_cards/${credit_card_id}/invoices/${invoice_id}`;
+
+      const response = await fetch(url, {
+        headers: this.buildHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return (await response.json()) as DetailedInvoice;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to get invoice details: ${error.message}`);
       }
 
       throw new Error("Unknown error occurred");

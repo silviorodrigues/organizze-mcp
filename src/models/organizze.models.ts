@@ -51,7 +51,7 @@ export interface CreditCard {
   type: "credit_card";
 }
 
-export interface Invoice {
+export interface CreditCardInvoice {
   id: number;
   date: string;
   starting_date: string;
@@ -61,4 +61,44 @@ export interface Invoice {
   balance_cents: number;
   previous_balance_cents: number;
   credit_card_id: number;
+}
+
+export interface DetailedInvoice {
+  id: number;
+  date: string;
+  starting_date: string;
+  closing_date: string;
+  amount_cents: number;
+  payment_amount_cents: number;
+  balance_cents: number;
+  previous_balance_cents: number;
+  credit_card_id: number;
+  transactions: Transaction[];
+  payments: Transaction[];
+}
+
+export interface Transaction {
+  id: number;
+  description: string;
+  date: string;
+  paid: boolean;
+  amount_cents: number;
+  total_installments: number;
+  installment: number;
+  recurring: boolean;
+  account_id: number;
+  account_type: "CreditCard" | "Account";
+  category_id: number;
+  notes: string | null;
+  attachments_count: number;
+  credit_card_id: number | null;
+  credit_card_invoice_id: number | null;
+  paid_credit_card_id: number | null;
+  paid_credit_card_invoice_id: number | null;
+  oposite_transaction_id: number | null;
+  oposite_account_id: number | null;
+  created_at: string;
+  updated_at: string;
+  tags: string[];
+  attachments: string[];
 }

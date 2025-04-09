@@ -185,6 +185,64 @@ server.tool(
 );
 
 server.tool(
+  "get-credit-cards-invoice-details",
+  "Get details about an credit card invoice",
+  {
+    credit_card_id: z.number(),
+    invoice_id: z.number(),
+  },
+  async ({ credit_card_id, invoice_id }) => {
+    try {
+      const response = await organizzeService.getInvoiceDetails(credit_card_id, invoice_id);
+
+      if (!response) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No invoice found",
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Invoice details found",
+          },
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to get credit card invoice details: ${error.message}`,
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "An unknown error occurred",
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.tool(
   "get-budgets",
   "Get a list of target budgets",
   {

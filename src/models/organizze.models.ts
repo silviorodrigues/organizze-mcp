@@ -50,3 +50,15 @@ export interface CreditCard {
   updated_at: string;
   type: "credit_card";
 }
+
+export interface Invoice {
+  id: number;
+  date: string;
+  starting_date: string;
+  closing_date: string;
+  amount_cents: number;
+  payment_amount_cents: number;
+  balance_cents: number;
+  previous_balance_cents: number;
+  credit_card_id: number;
+}

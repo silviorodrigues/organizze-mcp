@@ -5,12 +5,18 @@ import {
   Budget,
   Category,
   CreditCard,
+  Invoice,
 } from "../models/organizze.models.js";
 
 interface OrganizzeArgv {
   "organizze-username": string;
   "organizze-api-key": string;
   [key: string]: unknown;
+}
+
+interface OrganizzeDateRange {
+  start_date: string;
+  end_date: string;
 }
 
 export class OrganizzeService {
@@ -87,6 +93,32 @@ export class OrganizzeService {
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Failed to get credit cards: ${error.message}`);
+      }
+
+      throw new Error("Unknown error occurred");
+    }
+  }
+
+  public async getCreditCardInvoices(credit_card_id: number, dateRange?: OrganizzeDateRange): Promise<Invoice[]> {
+    try {
+      let url = `${this.baseUrl}/credit_cards/${credit_card_id}/invoices`;
+
+      if (dateRange) {
+        url += `?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}`;
+      }
+
+      const response = await fetch(url, {
+        headers: this.buildHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return (await response.json()) as Invoice[];
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to get credit cards invoices: ${error.message}`);
       }
 
       throw new Error("Unknown error occurred");

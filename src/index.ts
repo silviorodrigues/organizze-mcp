@@ -243,6 +243,128 @@ server.tool(
 );
 
 server.tool(
+  "get-transactions",
+  "Get a list of transactions",
+  {
+    account_id: z.number().optional(),
+    date_range: z.object({
+      start_date: z.string(),
+      end_date: z.string(),
+    }).optional(),
+  },
+  async ({ account_id, date_range }) => {
+    try {
+      const response = await organizzeService.getTransactions({
+        account_id,
+        date_range,
+      });
+
+      if (!response) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No transaction found",
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Transactions found",
+          },
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to get transactions: ${error.message}`,
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "An unknown error occurred",
+          },
+        ],
+      };
+    }
+  }
+);
+
+
+server.tool(
+  "get-transaction",
+  "Get details about a transaction",
+  {
+    transaction_id: z.number()
+  },
+  async ({ transaction_id }) => {
+    try {
+      const response = await organizzeService.getTransaction(transaction_id);
+
+      if (!response) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No transaction found",
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Transaction found",
+          },
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to get transaction: ${error.message}`,
+            },
+          ],
+        };
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: "An unknown error occurred",
+          },
+        ],
+      };
+    }
+  }
+);
+
+server.tool(
   "get-budgets",
   "Get a list of target budgets",
   {

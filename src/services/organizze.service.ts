@@ -7,6 +7,7 @@ import {
   CreditCard,
   CreditCardInvoice,
   DetailedInvoice,
+  Transaction,
 } from "../models/organizze.models.js";
 
 interface OrganizzeArgv {
@@ -66,6 +67,61 @@ export class OrganizzeService {
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Failed to get bank accounts: ${error.message}`);
+      }
+
+      throw new Error("Unknown error occurred");
+    }
+  }
+  
+  public async getTransactions(params?: {
+    account_id?: number;
+    date_range?: OrganizzeDateRange;
+  }): Promise<Transaction[]> {
+    try {
+      let url = `${this.baseUrl}/transactions?`;
+
+      if (params?.account_id) {
+        url += `account_id=${params.account_id}&`;
+      }
+
+      if (params?.date_range) {
+        url += `start_date=${params.date_range.start_date}&end_date=${params.date_range.end_date}&`;
+      }
+
+      const response = await fetch(url, {
+        headers: this.buildHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return (await response.json()) as Transaction[];
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to get transactions: ${error.message}`);
+      }
+
+      throw new Error("Unknown error occurred");
+    }
+  }
+
+  public async getTransaction(transaction_id: number): Promise<Transaction> {
+    try {
+      let url = `${this.baseUrl}/transactions/${transaction_id}`;
+
+      const response = await fetch(url, {
+        headers: this.buildHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return (await response.json()) as Transaction;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to get transaction: ${error.message}`);
       }
 
       throw new Error("Unknown error occurred");

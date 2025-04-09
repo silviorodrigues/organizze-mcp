@@ -87,7 +87,6 @@ export interface Transaction {
   installment: number;
   recurring: boolean;
   account_id: number;
-  account_type: "CreditCard" | "Account";
   category_id: number;
   notes: string | null;
   attachments_count: number;
@@ -101,4 +100,5 @@ export interface Transaction {
   updated_at: string;
   tags: string[];
   attachments: string[];
+  recurrence_id: number | null;
 }

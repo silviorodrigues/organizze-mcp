@@ -2,6 +2,17 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { organizzeService } from "./services/organizze.service.js";
 import { z } from "zod";
+import { buildErrorResponse } from "./utils/formatters.js";
+import {
+  buildBankAccountsResponse,
+  buildCreditCardsResponse,
+  buildCreditCardInvoicesResponse,
+  buildInvoiceDetailsResponse,
+  buildTransactionsResponse,
+  buildTransactionResponse,
+  buildBudgetsResponse,
+  buildCategoriesResponse
+} from "./utils/response-builders.js";
 
 const server = new McpServer({
   name: "organizze-mcp",
@@ -30,38 +41,9 @@ server.tool(
         };
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Bank accounts found",
-          },
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
+      return buildBankAccountsResponse(response);
     } catch (error) {
-      if (error instanceof Error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to get bank accounts: ${error.message}`,
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "An unknown error occurred",
-          },
-        ],
-      };
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get bank accounts");
     }
   }
 );
@@ -87,38 +69,9 @@ server.tool(
         };
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Credit cards found",
-          },
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
+      return buildCreditCardsResponse(response);
     } catch (error) {
-      if (error instanceof Error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to get credit cards: ${error.message}`,
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "An unknown error occurred",
-          },
-        ],
-      };
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get credit cards");
     }
   }
 );
@@ -148,38 +101,9 @@ server.tool(
         };
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Credit card invoices found",
-          },
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
+      return buildCreditCardInvoicesResponse(response, credit_card_id);
     } catch (error) {
-      if (error instanceof Error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to get credit card invoices: ${error.message}`,
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "An unknown error occurred",
-          },
-        ],
-      };
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get credit card invoices");
     }
   }
 );
@@ -206,38 +130,9 @@ server.tool(
         };
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Invoice details found",
-          },
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
+      return buildInvoiceDetailsResponse(response);
     } catch (error) {
-      if (error instanceof Error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to get credit card invoice details: ${error.message}`,
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "An unknown error occurred",
-          },
-        ],
-      };
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get credit card invoice details");
     }
   }
 );
@@ -264,44 +159,15 @@ server.tool(
           content: [
             {
               type: "text",
-              text: "No transaction found",
+              text: "No transactions found",
             },
           ],
         };
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Transactions found",
-          },
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
+      return buildTransactionsResponse(response);
     } catch (error) {
-      if (error instanceof Error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to get transactions: ${error.message}`,
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "An unknown error occurred",
-          },
-        ],
-      };
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get transactions");
     }
   }
 );
@@ -328,38 +194,9 @@ server.tool(
         };
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Transaction found",
-          },
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
+      return buildTransactionResponse(response);
     } catch (error) {
-      if (error instanceof Error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to get transaction: ${error.message}`,
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "An unknown error occurred",
-          },
-        ],
-      };
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get transaction");
     }
   }
 );
@@ -386,38 +223,9 @@ server.tool(
         };
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Budgets found",
-          },
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
+      return buildBudgetsResponse(response);
     } catch (error) {
-      if (error instanceof Error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to get budgets: ${error.message}`,
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "An unknown error occurred",
-          },
-        ],
-      };
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get budgets");
     }
   }
 );
@@ -443,38 +251,9 @@ server.tool(
         };
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: "Categories found",
-          },
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
+      return buildCategoriesResponse(response);
     } catch (error) {
-      if (error instanceof Error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Failed to get categories: ${error.message}`,
-            },
-          ],
-        };
-      }
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: "An unknown error occurred",
-          },
-        ],
-      };
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get categories");
     }
   }
 );

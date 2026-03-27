@@ -14,7 +14,9 @@ import {
   buildCategoriesResponse,
   buildTransfersResponse,
   buildTransferResponse,
+  buildSpendingSummaryResponse,
 } from "./utils/response-builders.js";
+import type { BudgetEntry } from "./utils/response-builders.js";
 
 const server = new McpServer({
   name: "organizze-mcp",
@@ -307,6 +309,56 @@ server.tool(
       return buildTransferResponse(response, accountMap);
     } catch (error) {
       return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get transfer");
+    }
+  }
+);
+
+server.tool(
+  "get-spending-summary",
+  "Get spending grouped by category with totals and percentages for a date range. Use this for monthly reviews, finding top expense categories, or checking budget progress. Excludes transfers between accounts. Optionally compare against budget targets.",
+  {
+    date_range: z.object({
+      start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Start date in YYYY-MM-DD format."),
+      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("End date in YYYY-MM-DD format."),
+    }).describe("The period to summarize. Recommend one month at a time for best results."),
+    include_budget_comparison: z.boolean().optional().describe("If true, include budget targets alongside actual spending. Defaults to false."),
+  },
+  async ({ date_range, include_budget_comparison }) => {
+    try {
+      const transactions = await organizzeService.getTransactions({ date_range });
+
+      // Filter out transfers (they have an oposite_transaction_id)
+      const nonTransferTransactions = transactions.filter(
+        (t) => t.oposite_transaction_id === null
+      );
+
+      const categoryMap = await organizzeService.getCategoryMap();
+
+      let budgetMap: Map<number, BudgetEntry> | null = null;
+      if (include_budget_comparison) {
+        const year = date_range.start_date.slice(0, 4);
+        const month = String(parseInt(date_range.start_date.slice(5, 7), 10));
+        const budgets = await organizzeService.getBudgets(year, month);
+        if (budgets && budgets.length > 0) {
+          budgetMap = new Map(
+            budgets.map((b) => [
+              b.category_id,
+              {
+                amount_cents: b.amount_in_cents,
+                category_name: categoryMap?.get(b.category_id) ?? `#${b.category_id}`,
+              },
+            ])
+          );
+        }
+      }
+
+      return buildSpendingSummaryResponse({
+        transactions: nonTransferTransactions,
+        categoryMap,
+        budgetMap,
+      });
+    } catch (error) {
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get spending summary");
     }
   }
 );

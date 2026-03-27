@@ -9,6 +9,7 @@ import {
   DetailedInvoice,
   Transaction,
 } from "../models/organizze.models.js";
+import { CachedLookup } from "../utils/cached-lookup.js";
 
 interface OrganizzeArgv {
   "organizze-username": string;
@@ -37,6 +38,15 @@ export class OrganizzeService {
     })
     .help().argv as OrganizzeArgv;
 
+  private readonly categoryLookup = new CachedLookup<number, string>(async () => {
+    const categories = await this.getCategories() as Category[];
+    return new Map(categories.map((c) => [c.id, c.name]));
+  });
+
+  public async getCategoryMap(): Promise<Map<number, string> | null> {
+    return this.categoryLookup.get();
+  }
+
   private readonly buildHeaders = () => {
     const username = this.argv["organizze-username"];
     const apiKey = this.argv["organizze-api-key"];
@@ -51,7 +61,7 @@ export class OrganizzeService {
   ): Promise<BankAccount[] | BankAccount> {
     try {
       let url = `${this.baseUrl}/accounts`;
-      if (account_id) {
+      if (account_id !== undefined) {
         url += `/${account_id}`;
       }
 
@@ -134,7 +144,7 @@ export class OrganizzeService {
     try {
       let url = `${this.baseUrl}/credit_cards`;
 
-      if (credit_card_id) {
+      if (credit_card_id !== undefined) {
         url += `/${credit_card_id}`;
       }
 
@@ -240,7 +250,7 @@ export class OrganizzeService {
     try {
       let url = `${this.baseUrl}/categories`;
 
-      if (category_id) {
+      if (category_id !== undefined) {
         url += `/${category_id}`;
       }
 

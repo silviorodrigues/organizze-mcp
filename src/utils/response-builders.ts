@@ -16,6 +16,29 @@ import {
   createMarkdownTable,
 } from "./formatters.js";
 
+const JSON_CAP = 50;
+
+function buildCappedJson(data: unknown): string {
+  if (Array.isArray(data) && data.length > JSON_CAP) {
+    const capped = data.slice(0, JSON_CAP);
+    return (
+      "```json\n" +
+      JSON.stringify(capped, null, 2) +
+      "\n```\n" +
+      `_Showing ${JSON_CAP} of ${data.length} items in JSON. Use date_range to narrow results._`
+    );
+  }
+  return "```json\n" + JSON.stringify(data, null, 2) + "\n```";
+}
+
+function resolveCategoryName(
+  categoryId: number,
+  categoryMap?: Map<number, string> | null
+): string {
+  if (!categoryMap) return `#${categoryId}`;
+  return categoryMap.get(categoryId) ?? `#${categoryId}`;
+}
+
 /**
  * Build response for bank accounts
  */
@@ -60,10 +83,7 @@ export function buildBankAccountsResponse(
     content: [
       { type: "text", text: summary },
       { type: "text", text: table },
-      {
-        type: "text",
-        text: "```json\n" + JSON.stringify(accounts, null, 2) + "\n```",
-      },
+      { type: "text", text: buildCappedJson(accounts) },
     ],
   };
 }
@@ -145,10 +165,7 @@ export function buildCreditCardsResponse(
     content: [
       { type: "text", text: summary },
       { type: "text", text: table },
-      {
-        type: "text",
-        text: "```json\n" + JSON.stringify(cards, null, 2) + "\n```",
-      },
+      { type: "text", text: buildCappedJson(cards) },
     ],
   };
 }
@@ -242,10 +259,7 @@ export function buildCreditCardInvoicesResponse(
     content: [
       { type: "text", text: summary },
       { type: "text", text: table },
-      {
-        type: "text",
-        text: "```json\n" + JSON.stringify(invoices, null, 2) + "\n```",
-      },
+      { type: "text", text: buildCappedJson(invoices) },
     ],
   };
 }
@@ -254,7 +268,8 @@ export function buildCreditCardInvoicesResponse(
  * Build response for invoice details
  */
 export function buildInvoiceDetailsResponse(
-  invoice: DetailedInvoice
+  invoice: DetailedInvoice,
+  categoryMap?: Map<number, string> | null
 ): CallToolResult {
   if (!invoice) {
     return {
@@ -312,32 +327,31 @@ export function buildInvoiceDetailsResponse(
           formatShortDate(transaction.date),
           transaction.description,
           formatCurrency(transaction.amount_cents),
-          `Category ID: ${transaction.category_id}`, // Would be better with actual category name
+          resolveCategoryName(transaction.category_id, categoryMap),
         ]
       );
   }
 
-  // Return formatted response
-  return {
-    content: [
-      { type: "text", text: summary },
-      { type: "text", text: statementSummary },
-      transactionsTable
-        ? { type: "text", text: transactionsTable }
-        : { type: "text", text: "" },
-      {
-        type: "text",
-        text: "```json\n" + JSON.stringify(invoice, null, 2) + "\n```",
-      },
-    ],
-  };
+  const content: CallToolResult["content"] = [
+    { type: "text", text: summary },
+    { type: "text", text: statementSummary },
+  ];
+
+  if (transactionsTable) {
+    content.push({ type: "text", text: transactionsTable });
+  }
+
+  content.push({ type: "text", text: buildCappedJson(invoice) });
+
+  return { content };
 }
 
 /**
  * Build response for transactions
  */
 export function buildTransactionsResponse(
-  transactions: Transaction[]
+  transactions: Transaction[],
+  categoryMap?: Map<number, string> | null
 ): CallToolResult {
   if (!transactions || transactions.length === 0) {
     return {
@@ -387,33 +401,28 @@ export function buildTransactionsResponse(
 
   // Create transactions table
   const table = createMarkdownTable<Transaction>(
-    ["Date", "Description", "Amount", "Paid", "Category ID"],
-    ["center", "left", "right", "center", "center"],
-    sortedTransactions.slice(0, 10), // Limit to 10 transactions for readability
+    ["Date", "Description", "Amount", "Paid", "Category"],
+    ["center", "left", "right", "center", "left"],
+    sortedTransactions.slice(0, 10),
     (transaction) => [
       formatShortDate(transaction.date),
       transaction.description,
       formatCurrency(transaction.amount_cents),
       transaction.paid ? "✓" : "✗",
-      transaction.category_id.toString(),
+      resolveCategoryName(transaction.category_id, categoryMap),
     ]
   );
 
-  // Add note if there are more than 10 transactions
   const note =
     transactions.length > 10
-      ? `\n_Showing 10 of ${transactions.length} transactions. Full data available in the JSON below._`
+      ? `\n_Showing 10 of ${transactions.length} transactions._`
       : "";
 
-  // Return formatted response
   return {
     content: [
       { type: "text", text: summary },
       { type: "text", text: table + note },
-      {
-        type: "text",
-        text: "```json\n" + JSON.stringify(transactions, null, 2) + "\n```",
-      },
+      { type: "text", text: buildCappedJson(transactions) },
     ],
   };
 }
@@ -422,7 +431,8 @@ export function buildTransactionsResponse(
  * Build response for a single transaction
  */
 export function buildTransactionResponse(
-  transaction: Transaction
+  transaction: Transaction,
+  categoryMap?: Map<number, string> | null
 ): CallToolResult {
   if (!transaction) {
     return {
@@ -443,7 +453,7 @@ export function buildTransactionResponse(
     `**Description:** ${transaction.description}`,
     `**Date:** ${formatDate(transaction.date)}`,
     `**Amount:** ${formatCurrency(transaction.amount_cents)}`,
-    `**Category ID:** ${transaction.category_id}`,
+    `**Category:** ${resolveCategoryName(transaction.category_id, categoryMap)}`,
     `**Account ID:** ${transaction.account_id}`,
     `**Status:** ${transaction.paid ? "Paid" : "Not paid"}`,
     `**Recurring:** ${transaction.recurring ? "Yes" : "No"}`,
@@ -472,7 +482,8 @@ export function buildTransactionResponse(
 export function buildBudgetsResponse(
   budgets: Budget[],
   year?: string,
-  month?: string
+  month?: string,
+  categoryMap?: Map<number, string> | null
 ): CallToolResult {
   if (!budgets || budgets.length === 0) {
     return {
@@ -508,8 +519,8 @@ export function buildBudgetsResponse(
 
   // Create budget table
   const table = createMarkdownTable<Budget>(
-    ["Category ID", "Budget", "Spent", "Remaining", "% Used"],
-    ["center", "right", "right", "right", "right"],
+    ["Category", "Budget", "Spent", "Remaining", "% Used"],
+    ["left", "right", "right", "right", "right"],
     budgets,
     (budget) => {
       const remaining = budget.amount_in_cents - budget.total;
@@ -518,7 +529,7 @@ export function buildBudgetsResponse(
         budget.amount_in_cents
       );
       return [
-        budget.category_id.toString(),
+        resolveCategoryName(budget.category_id, categoryMap),
         formatCurrency(budget.amount_in_cents),
         formatCurrency(budget.total),
         formatCurrency(remaining),
@@ -541,10 +552,7 @@ export function buildBudgetsResponse(
       { type: "text", text: summary },
       { type: "text", text: table },
       { type: "text", text: budgetStatus },
-      {
-        type: "text",
-        text: "```json\n" + JSON.stringify(budgets, null, 2) + "\n```",
-      },
+      { type: "text", text: buildCappedJson(budgets) },
     ],
   };
 }
@@ -617,22 +625,21 @@ export function buildCategoriesResponse(
       );
   }
 
-  // Return formatted response
-  return {
-    content: [
-      { type: "text", text: summary },
-      expenseCategoriesTable
-        ? { type: "text", text: expenseCategoriesTable }
-        : { type: "text", text: "" },
-      incomeCategoriesTable
-        ? { type: "text", text: incomeCategoriesTable }
-        : { type: "text", text: "" },
-      {
-        type: "text",
-        text: "```json\n" + JSON.stringify(categories, null, 2) + "\n```",
-      },
-    ],
-  };
+  const content: CallToolResult["content"] = [
+    { type: "text", text: summary },
+  ];
+
+  if (expenseCategoriesTable) {
+    content.push({ type: "text", text: expenseCategoriesTable });
+  }
+
+  if (incomeCategoriesTable) {
+    content.push({ type: "text", text: incomeCategoriesTable });
+  }
+
+  content.push({ type: "text", text: buildCappedJson(categories) });
+
+  return { content };
 }
 
 /**

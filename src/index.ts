@@ -130,7 +130,8 @@ server.tool(
         };
       }
 
-      return buildInvoiceDetailsResponse(response);
+      const categoryMap = await organizzeService.getCategoryMap();
+      return buildInvoiceDetailsResponse(response, categoryMap);
     } catch (error) {
       return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get credit card invoice details");
     }
@@ -165,7 +166,8 @@ server.tool(
         };
       }
 
-      return buildTransactionsResponse(response);
+      const categoryMap = await organizzeService.getCategoryMap();
+      return buildTransactionsResponse(response, categoryMap);
     } catch (error) {
       return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get transactions");
     }
@@ -194,7 +196,8 @@ server.tool(
         };
       }
 
-      return buildTransactionResponse(response);
+      const categoryMap = await organizzeService.getCategoryMap();
+      return buildTransactionResponse(response, categoryMap);
     } catch (error) {
       return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get transaction");
     }
@@ -223,7 +226,8 @@ server.tool(
         };
       }
 
-      return buildBudgetsResponse(response);
+      const categoryMap = await organizzeService.getCategoryMap();
+      return buildBudgetsResponse(response, undefined, undefined, categoryMap);
     } catch (error) {
       return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get budgets");
     }

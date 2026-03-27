@@ -95,6 +95,7 @@ export class OrganizzeService {
   public async getTransactions(params?: {
     account_id?: number;
     date_range?: OrganizzeDateRange;
+    recurring_only?: boolean;
   }): Promise<Transaction[]> {
     try {
       let url = `${this.baseUrl}/transactions?`;
@@ -115,7 +116,13 @@ export class OrganizzeService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return (await response.json()) as Transaction[];
+      let transactions = (await response.json()) as Transaction[];
+
+      if (params?.recurring_only) {
+        transactions = transactions.filter((t) => t.recurring);
+      }
+
+      return transactions;
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Failed to get transactions: ${error.message}`);

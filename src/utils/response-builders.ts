@@ -359,20 +359,24 @@ export function buildTransactionsResponse(
     };
   }
 
-  // Calculate total spending (only for expenses)
+  // Calculate totals
   const expenses = transactions.filter((t) => t.amount_cents < 0);
+  const income = transactions.filter((t) => t.amount_cents > 0);
   const totalSpending = Math.abs(
     expenses.reduce((sum, t) => sum + t.amount_cents, 0)
   );
+  const totalIncome = income.reduce((sum, t) => sum + t.amount_cents, 0);
 
-  // Find largest transaction
-  const largestExpense = expenses.reduce(
-    (max, transaction) =>
-      Math.abs(transaction.amount_cents) > Math.abs(max.amount_cents)
-        ? transaction
-        : max,
-    { amount_cents: 0, description: "" } as Transaction
-  );
+  // Find largest expense
+  const largestExpense = expenses.length > 0
+    ? expenses.reduce(
+        (max, transaction) =>
+          Math.abs(transaction.amount_cents) > Math.abs(max.amount_cents)
+            ? transaction
+            : max,
+        { amount_cents: 0, description: "" } as Transaction
+      )
+    : null;
 
   // Sort transactions by date (newest first)
   const sortedTransactions = [...transactions].sort(
@@ -387,30 +391,67 @@ export function buildTransactionsResponse(
   const dateRangeText =
     startDate === endDate ? startDate : `${startDate} to ${endDate}`;
 
+  // Check if we need recurring/installment columns
+  const hasRecurring = transactions.some((t) => t.recurring);
+  const hasInstallments = transactions.some((t) => t.total_installments > 1);
+
   // Create summary text
-  const summary =
+  let summary =
     `Found ${transactions.length} transaction${
       transactions.length !== 1 ? "s" : ""
-    } from ${dateRangeText}.` +
-    (expenses.length > 0
-      ? ` Total spending: ${formatCurrency(totalSpending)}.` +
-        ` Largest expense: ${formatCurrency(
-          Math.abs(largestExpense.amount_cents)
-        )} at '${largestExpense.description}'.`
-      : "");
+    } from ${dateRangeText}.`;
 
-  // Create transactions table
+  if (totalIncome > 0) {
+    summary += ` Total income: ${formatCurrency(totalIncome)}.`;
+  }
+  if (expenses.length > 0) {
+    summary += ` Total spending: ${formatCurrency(totalSpending)}.`;
+  }
+  if (largestExpense && largestExpense.amount_cents !== 0) {
+    summary += ` Largest expense: ${formatCurrency(
+      Math.abs(largestExpense.amount_cents)
+    )} at '${largestExpense.description}'.`;
+  }
+
+  // Build dynamic headers and row data
+  const headers = ["Date", "Description", "Amount", "Paid", "Category"];
+  const alignments: ("center" | "left" | "right")[] = ["center", "left", "right", "center", "left"];
+
+  if (hasRecurring) {
+    headers.push("Recurring");
+    alignments.push("center");
+  }
+  if (hasInstallments) {
+    headers.push("Installment");
+    alignments.push("center");
+  }
+
   const table = createMarkdownTable<Transaction>(
-    ["Date", "Description", "Amount", "Paid", "Category"],
-    ["center", "left", "right", "center", "left"],
+    headers,
+    alignments,
     sortedTransactions.slice(0, 10),
-    (transaction) => [
-      formatShortDate(transaction.date),
-      transaction.description,
-      formatCurrency(transaction.amount_cents),
-      transaction.paid ? "✓" : "✗",
-      resolveCategoryName(transaction.category_id, categoryMap),
-    ]
+    (transaction) => {
+      const row = [
+        formatShortDate(transaction.date),
+        transaction.description,
+        formatCurrency(transaction.amount_cents),
+        transaction.paid ? "✓" : "✗",
+        resolveCategoryName(transaction.category_id, categoryMap),
+      ];
+
+      if (hasRecurring) {
+        row.push(transaction.recurring ? "✓" : "");
+      }
+      if (hasInstallments) {
+        row.push(
+          transaction.total_installments > 1
+            ? `${transaction.installment}/${transaction.total_installments}`
+            : ""
+        );
+      }
+
+      return row;
+    }
   );
 
   const note =

@@ -1,10 +1,10 @@
 # Organizze MCP
 
-An MCP (Model Context Protocol) server for the Organizze API.
+An MCP (Model Context Protocol) server that connects Claude to the [Organizze](https://www.organizze.com.br/) personal finance API. Ask Claude natural-language questions about your finances and it will fetch the right data automatically.
 
 ## Installation
 
-To use this MCP server with Claude, you need to provide your Organizze credentials:
+Add the server to your Claude MCP configuration:
 
 ```json
 {
@@ -22,70 +22,79 @@ To use this MCP server with Claude, you need to provide your Organizze credentia
 }
 ```
 
-`username` is the email address you use to log in to Organizze, and the `api-key` can be found in your [Organizze account settings](https://app.organizze.com.br/configuracoes/api-keys).
+- `YOUR_USERNAME` — the email you use to log in to Organizze
+- `YOUR_API_KEY` — found in [Organizze account settings](https://app.organizze.com.br/configuracoes/api-keys)
 
 ## Available Tools
 
-The MCP server provides the following tools:
+### Accounts
 
-### Account and Transaction Tools
+| Tool | Description |
+|------|-------------|
+| `get-bank-accounts` | List all bank accounts or fetch one by ID |
 
-- `get-bank-accounts`: Get a list of bank accounts or a single bank account by ID
-- `get-transactions`: Get a list of transactions
-- `get-transaction`: Get details about a specific transaction
+### Transactions
 
-### Credit Card Tools
+| Tool | Description |
+|------|-------------|
+| `get-transactions` | List transactions for a date range, optionally filtered by account or recurring status. Defaults to the current month |
+| `get-transaction` | Get full details of a single transaction by ID |
+| `create-transaction` | Create a one-time expense or income transaction |
 
-- `get-credit-cards`: Get a list of credit cards or a single credit card by ID
-- `get-credit-cards-invoices`: Get a list of credit card invoices by credit card ID
-- `get-credit-cards-invoice-details`: Get details about a credit card invoice
+### Transfers
 
-### Budget and Category Tools
+| Tool | Description |
+|------|-------------|
+| `get-transfers` | List transfers between bank accounts for a date range. Defaults to the current month |
+| `get-transfer` | Get full details of a single transfer by ID |
 
-- `get-budgets`: Get a list of target budgets
-- `get-categories`: Get a list of categories or a single category by ID
+### Credit Cards
 
-## Examples
+| Tool | Description |
+|------|-------------|
+| `get-credit-cards` | List all credit cards or fetch one by ID |
+| `get-credit-cards-invoices` | List invoices for a credit card. Defaults to the current year |
+| `get-credit-cards-invoice-details` | Get full invoice details including line-item transactions and payment status |
 
-Once connected to the MCP server, you can use the tools in Claude:
+### Budgets and Categories
 
-### Basic Usage
+| Tool | Description |
+|------|-------------|
+| `get-budgets` | Get monthly or annual budget targets by category |
+| `get-categories` | List all categories or fetch one by ID |
+| `get-spending-summary` | Get spending grouped by category with totals, percentages, and optional budget comparison |
 
-```
-I want to see my bank accounts.
-```
-
-Claude will use the `get-bank-accounts` tool to fetch and display your bank accounts from Organizze.
-
-### Using Parameters
-
-```
-Show me the details of category with ID 123.
-```
-
-Claude will use the `get-categories` tool with the specified category ID.
-
-### Complex Queries
+## Example Prompts
 
 ```
-Show me all transactions from my checking account between January 1st and January 31st, 2023.
+What did I spend last month?
+```
+```
+Show me all transactions from my Nubank account in March.
+```
+```
+How close am I to my grocery budget this month?
+```
+```
+List my credit card invoices for 2025.
+```
+```
+I spent R$45 on lunch today — add it to my Food category.
+```
+```
+How much did I transfer between accounts this year?
 ```
 
-Claude will use the `get-transactions` tool with account_id and date_range parameters.
+## Development
 
-```
-I need to see the details of my credit card invoice #456 for my Visa card.
-```
-
-Claude will use the `get-credit-cards-invoice-details` tool with the appropriate credit_card_id and invoice_id.
-
-### Budget Analysis
-
-```
-What were my budget targets for December 2023?
+```bash
+npm install
+npm run build   # compile TypeScript
+npm test        # run the test suite
+npm run test:watch  # watch mode
 ```
 
-Claude will use the `get-budgets` tool with year and month parameters to retrieve the requested budget information.
+A CI workflow runs the build and tests automatically on every pull request.
 
 ## License
 

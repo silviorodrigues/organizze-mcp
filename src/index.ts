@@ -114,14 +114,18 @@ server.tool(
 
 server.tool(
   "get-credit-cards-invoice-details",
-  "Get full details of a credit card invoice including all line-item transactions. Use get-credit-cards-invoices first to find the invoice ID.",
+  "Get full details of a credit card invoice including all line-item transactions and payment information. Use get-credit-cards-invoices first to find the invoice ID. Shows payment status (paid/partial/unpaid).",
   {
     credit_card_id: z.number().describe("Credit card ID from get-credit-cards."),
     invoice_id: z.number().describe("Invoice ID from get-credit-cards-invoices."),
   },
   async ({ credit_card_id, invoice_id }) => {
     try {
-      const response = await organizzeService.getInvoiceDetails(credit_card_id, invoice_id);
+      const [response, payments, categoryMap] = await Promise.all([
+        organizzeService.getInvoiceDetails(credit_card_id, invoice_id),
+        organizzeService.getInvoicePayments(credit_card_id, invoice_id).catch(() => null),
+        organizzeService.getCategoryMap(),
+      ]);
 
       if (!response) {
         return {
@@ -134,8 +138,7 @@ server.tool(
         };
       }
 
-      const categoryMap = await organizzeService.getCategoryMap();
-      return buildInvoiceDetailsResponse(response, categoryMap);
+      return buildInvoiceDetailsResponse(response, categoryMap, payments);
     } catch (error) {
       return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get credit card invoice details");
     }

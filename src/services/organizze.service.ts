@@ -230,6 +230,30 @@ export class OrganizzeService {
     }
   }
 
+  public async getInvoicePayments(creditCardId: number, invoiceId: number): Promise<Transaction[]> {
+    try {
+      const url = `${this.baseUrl}/credit_cards/${creditCardId}/invoices/${invoiceId}/payments`;
+
+      const response = await fetch(url, {
+        headers: this.buildHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      // API may return a single object or array
+      return Array.isArray(data) ? data as Transaction[] : [data as Transaction];
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to get invoice payments: ${error.message}`);
+      }
+
+      throw new Error("Unknown error occurred");
+    }
+  }
+
   public async getBudgets(year?: string, month?: string): Promise<Budget[]> {
     try {
       let url = `${this.baseUrl}/budgets`;

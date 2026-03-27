@@ -142,22 +142,36 @@ server.tool(
 
 server.tool(
   "get-transactions",
-  "List transactions for a date range, optionally filtered by account. Use this to analyze spending, find specific purchases, or review recent activity. Defaults to the current month if no date range is provided. For best results, query one month at a time.",
+  "List transactions for a date range, optionally filtered by account or recurring status. Use this to analyze spending, find specific purchases, review subscriptions, or check recent activity. Defaults to the current month if no date range is provided. For best results, query one month at a time.",
   {
     account_id: z.number().optional().describe("Filter by bank account ID from get-bank-accounts. Omit to include all accounts."),
     date_range: z.object({
       start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Start date in YYYY-MM-DD format."),
       end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("End date in YYYY-MM-DD format."),
     }).optional().describe("Filter to a date range. Defaults to current month if omitted. For best results, query one month at a time."),
+    recurring_only: z.boolean().optional().describe("If true, return only recurring/subscription transactions. Requires date_range to be set."),
   },
-  async ({ account_id, date_range }) => {
+  async (params) => {
+    if (params.recurring_only && !params.date_range) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: "Error: recurring_only requires date_range to be set. Provide a date range to filter recurring transactions.",
+          },
+        ],
+        isError: true,
+      };
+    }
+
     try {
       const response = await organizzeService.getTransactions({
-        account_id,
-        date_range,
+        account_id: params.account_id,
+        date_range: params.date_range,
+        recurring_only: params.recurring_only,
       });
 
-      if (!response) {
+      if (!response || response.length === 0) {
         return {
           content: [
             {

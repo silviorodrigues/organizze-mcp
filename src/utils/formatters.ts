@@ -5,15 +5,15 @@
 import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 /**
- * Format a number as currency (USD)
+ * Format a number as currency (BRL)
  * @param amountCents Amount in cents
  * @returns Formatted currency string
  */
 export function formatCurrency(amountCents: number): string {
   const amount = amountCents / 100;
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("pt-BR", {
     style: "currency",
-    currency: "USD",
+    currency: "BRL",
   }).format(amount);
 }
 
@@ -24,7 +24,7 @@ export function formatCurrency(amountCents: number): string {
  */
 export function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("pt-BR", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -38,13 +38,13 @@ export function formatDate(dateString: string): string {
  */
 export function formatShortDate(dateString: string): string {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat("pt-BR", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   })
     .format(date)
-    .replace(/(\d+)\/(\d+)\/(\d+)/, "$3-$1-$2");
+    .replace(/(\d+)\/(\d+)\/(\d+)/, "$3-$2-$1");
 }
 
 /**

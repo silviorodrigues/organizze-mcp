@@ -11,7 +11,9 @@ import {
   buildTransactionsResponse,
   buildTransactionResponse,
   buildBudgetsResponse,
-  buildCategoriesResponse
+  buildCategoriesResponse,
+  buildTransfersResponse,
+  buildTransferResponse,
 } from "./utils/response-builders.js";
 
 const server = new McpServer({
@@ -230,6 +232,67 @@ server.tool(
       return buildBudgetsResponse(response, undefined, undefined, categoryMap);
     } catch (error) {
       return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get budgets");
+    }
+  }
+);
+
+server.tool(
+  "get-transfers",
+  "List transfers between bank accounts for a date range. Transfers are money moved between your own accounts and are NOT expenses or income. Use this to understand internal money movement. Defaults to the current month if no date range is provided.",
+  {
+    date_range: z.object({
+      start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Start date in YYYY-MM-DD format."),
+      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("End date in YYYY-MM-DD format."),
+    }).optional().describe("Filter to a date range. Defaults to current month if omitted. For best results, query one month at a time."),
+  },
+  async ({ date_range }) => {
+    try {
+      const response = await organizzeService.getTransfers(date_range);
+
+      if (!response || response.length === 0) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No transfers found",
+            },
+          ],
+        };
+      }
+
+      const accountMap = await organizzeService.getAccountMap();
+      return buildTransfersResponse(response, accountMap);
+    } catch (error) {
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get transfers");
+    }
+  }
+);
+
+server.tool(
+  "get-transfer",
+  "Get full details of a single transfer by ID, including source and destination accounts. Use get-transfers first to find the transfer ID. Transfers are NOT expenses or income.",
+  {
+    transfer_id: z.number().describe("Transfer ID from get-transfers."),
+  },
+  async ({ transfer_id }) => {
+    try {
+      const response = await organizzeService.getTransfer(transfer_id);
+
+      if (!response) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "No transfer found",
+            },
+          ],
+        };
+      }
+
+      const accountMap = await organizzeService.getAccountMap();
+      return buildTransferResponse(response, accountMap);
+    } catch (error) {
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "get transfer");
     }
   }
 );

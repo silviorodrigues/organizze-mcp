@@ -47,6 +47,15 @@ export class OrganizzeService {
     return this.categoryLookup.get();
   }
 
+  private readonly accountLookup = new CachedLookup<number, string>(async () => {
+    const accounts = await this.getBankAccounts() as BankAccount[];
+    return new Map(accounts.map((a) => [a.id, a.name]));
+  });
+
+  public async getAccountMap(): Promise<Map<number, string> | null> {
+    return this.accountLookup.get();
+  }
+
   private readonly buildHeaders = () => {
     const username = this.argv["organizze-username"];
     const apiKey = this.argv["organizze-api-key"];
@@ -238,6 +247,54 @@ export class OrganizzeService {
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Failed to get events: ${error.message}`);
+      }
+
+      throw new Error("Unknown error occurred");
+    }
+  }
+
+  public async getTransfers(dateRange?: OrganizzeDateRange): Promise<Transaction[]> {
+    try {
+      let url = `${this.baseUrl}/transfers`;
+
+      if (dateRange) {
+        url += `?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}`;
+      }
+
+      const response = await fetch(url, {
+        headers: this.buildHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return (await response.json()) as Transaction[];
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to get transfers: ${error.message}`);
+      }
+
+      throw new Error("Unknown error occurred");
+    }
+  }
+
+  public async getTransfer(transfer_id: number): Promise<Transaction> {
+    try {
+      const url = `${this.baseUrl}/transfers/${transfer_id}`;
+
+      const response = await fetch(url, {
+        headers: this.buildHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return (await response.json()) as Transaction;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to get transfer: ${error.message}`);
       }
 
       throw new Error("Unknown error occurred");

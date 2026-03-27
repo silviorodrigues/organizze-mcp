@@ -4,6 +4,7 @@ import {
   BankAccount,
   Budget,
   Category,
+  CreateTransactionPayload,
   CreditCard,
   CreditCardInvoice,
   DetailedInvoice,
@@ -148,6 +149,33 @@ export class OrganizzeService {
     } catch (error) {
       if (error instanceof Error) {
         throw new Error(`Failed to get transaction: ${error.message}`);
+      }
+
+      throw new Error("Unknown error occurred");
+    }
+  }
+
+  public async createTransaction(payload: CreateTransactionPayload): Promise<Transaction> {
+    try {
+      const url = `${this.baseUrl}/transactions`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          ...this.buildHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return (await response.json()) as Transaction;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`Failed to create transaction: ${error.message}`);
       }
 
       throw new Error("Unknown error occurred");

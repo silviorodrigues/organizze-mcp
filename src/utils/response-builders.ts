@@ -270,7 +270,8 @@ export function buildCreditCardInvoicesResponse(
  */
 export function buildInvoiceDetailsResponse(
   invoice: DetailedInvoice,
-  categoryMap?: Map<number, string> | null
+  categoryMap?: Map<number, string> | null,
+  payments?: Transaction[] | null
 ): CallToolResult {
   if (!invoice) {
     return {
@@ -303,6 +304,16 @@ export function buildInvoiceDetailsResponse(
         )} at '${largestTransaction.description}'.`
       : "");
 
+  // Derive payment status
+  let paymentStatus: string;
+  if (invoice.balance_cents === 0) {
+    paymentStatus = "Paid in full";
+  } else if (invoice.payment_amount_cents > 0) {
+    paymentStatus = "Partially paid";
+  } else {
+    paymentStatus = "Unpaid";
+  }
+
   // Create statement summary
   const statementSummary = [
     "## Statement Summary",
@@ -313,6 +324,7 @@ export function buildInvoiceDetailsResponse(
     `**Payment:** ${formatCurrency(invoice.payment_amount_cents)}`,
     `**Balance:** ${formatCurrency(invoice.balance_cents)}`,
     `**Previous Balance:** ${formatCurrency(invoice.previous_balance_cents)}`,
+    `**Status:** ${paymentStatus}`,
   ].join("\n");
 
   // Create transactions table if there are transactions
@@ -333,6 +345,30 @@ export function buildInvoiceDetailsResponse(
       );
   }
 
+  // Use payments from param or fall back to inline invoice.payments
+  const allPayments = (payments && payments.length > 0)
+    ? payments
+    : (invoice.payments && invoice.payments.length > 0)
+      ? invoice.payments
+      : null;
+
+  let paymentsTable = "";
+  if (allPayments && allPayments.length > 0) {
+    paymentsTable =
+      "## Payments\n" +
+      createMarkdownTable<Transaction>(
+        ["Date", "Description", "Amount", "Paid"],
+        ["center", "left", "right", "center"],
+        allPayments,
+        (payment) => [
+          formatShortDate(payment.date),
+          payment.description || "Payment",
+          formatCurrency(Math.abs(payment.amount_cents)),
+          payment.paid ? "✓" : "✗",
+        ]
+      );
+  }
+
   const content: CallToolResult["content"] = [
     { type: "text", text: summary },
     { type: "text", text: statementSummary },
@@ -340,6 +376,10 @@ export function buildInvoiceDetailsResponse(
 
   if (transactionsTable) {
     content.push({ type: "text", text: transactionsTable });
+  }
+
+  if (paymentsTable) {
+    content.push({ type: "text", text: paymentsTable });
   }
 
   content.push({ type: "text", text: buildCappedJson(invoice) });

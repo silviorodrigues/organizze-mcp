@@ -102,3 +102,14 @@ export interface Transaction {
   attachments: string[];
   recurrence_id: number | null;
 }
+
+export interface CreateTransactionPayload {
+  description: string;
+  date: string;
+  amount_cents: number;
+  category_id: number;
+  account_id: number;
+  notes?: string | null;
+  tags?: string[];
+  paid?: boolean;
+}

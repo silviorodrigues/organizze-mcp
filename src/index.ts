@@ -226,6 +226,40 @@ server.tool(
 );
 
 server.tool(
+  "create-transaction",
+  "Write operation -- creates a real transaction in Organizze. Single one-time transactions only; recurring and installment transactions are not supported in this version. Use get-categories and get-bank-accounts first to find valid category and account IDs. Amount in cents: negative for expenses (e.g. -5000 = R$50.00 expense), positive for income (e.g. 5000 = R$50.00 income).",
+  {
+    description: z.string().describe("Transaction description, e.g. 'Grocery store' or 'Freelance payment'."),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe("Transaction date in YYYY-MM-DD format."),
+    amount_cents: z.number().int().refine((v) => v !== 0, { message: "amount_cents cannot be 0" }).describe("Amount in cents. Negative = expense, positive = income. E.g. -5000 = R$50.00 expense."),
+    category_id: z.number().describe("Category ID from get-categories. Required."),
+    account_id: z.number().describe("Bank account ID from get-bank-accounts. Required."),
+    notes: z.string().optional().describe("Optional notes for the transaction."),
+    tags: z.array(z.string()).optional().describe("Optional tags, e.g. ['groceries', 'weekly']."),
+    paid: z.boolean().optional().describe("Whether the transaction is already paid. Defaults to true if omitted."),
+  },
+  async (params) => {
+    try {
+      const response = await organizzeService.createTransaction({
+        description: params.description,
+        date: params.date,
+        amount_cents: params.amount_cents,
+        category_id: params.category_id,
+        account_id: params.account_id,
+        notes: params.notes,
+        tags: params.tags,
+        paid: params.paid,
+      });
+
+      const categoryMap = await organizzeService.getCategoryMap();
+      return buildTransactionResponse(response, categoryMap);
+    } catch (error) {
+      return buildErrorResponse(error instanceof Error ? error : new Error("Unknown error"), "create transaction");
+    }
+  }
+);
+
+server.tool(
   "get-budgets",
   "Get monthly or annual budget targets by category. Use this to check spending limits and compare against actual spending from get-transactions.",
   {
